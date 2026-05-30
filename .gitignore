@@ -1,0 +1,45 @@
+# ── Secrets ──
+.env
+.env.local
+*.key
+
+# ── Python ──
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Node / Frontend ──
+node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# ── Video working files ──
+uploads/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.mp3
+*.wav
+*.srt
+!frontend/public/**/*.mp4
+
+# ── Editor / OS ──
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Build / deploy ──
+.vercel/
+.railway/
+
+# ── Claude Code local state (keep .claude/ committed, ignore local caches) ──
+.claude/local/
+.claude/*.local.json
