@@ -6,11 +6,11 @@ Read before touching anything in `frontend/src/`.
 ```
 frontend/
 ├── index.html
-├── vite.config.js
-├── tailwind.config.js
+├── vite.config.js             # React + @tailwindcss/vite plugin (Tailwind v4)
 ├── package.json
 └── src/
     ├── main.jsx
+    ├── index.css               # @import "tailwindcss" + @theme design tokens
     ├── App.jsx                 # layout shell + top-level state
     ├── api.js                  # fetch wrappers + WS helper (reads VITE_API_URL)
     ├── components/

@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* ── Design tokens (the editing-console aesthetic) ── */
+@theme {
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-accent: #f97316; /* orange-500 */
+  --color-accent-soft: #fb923c; /* orange-400 */
+  --color-surface: #0b0f17; /* near slate-950 */
+  --color-panel: #111826; /* slate-900-ish */
+  --color-edge: #1e293b; /* slate-800 */
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: #e2e8f0; /* slate-200 */
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle dotted texture for depth, not a flat fill */
+#root {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Staggered fade-in used by status events */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: rise 0.28s ease-out both;
+}

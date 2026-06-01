@@ -59,7 +59,7 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 1 — repo skeleton + CLAUDE.md + Claude Code auth verified (Pro subscription)
 - [x] Day 2 — wrote the 4 specs (agent, api, frontend, deploy)
 - [x] Day 3 — backend skeleton + PreToolUse lint hook + .mcp.json
-- [ ] Day 4 — frontend skeleton + ui-builder sub-agent
+- [x] Day 4 — frontend skeleton (Vite+React+Tailwind v4) + ui-builder sub-agent + Uploader/VideoPlayer/CommandBar/JobStatus
 - [ ] Day 5 — wire stub WebSocket + /scaffold command
 
 ## Supported edit ops (target — built in Phase 2)
