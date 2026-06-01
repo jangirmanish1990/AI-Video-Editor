@@ -47,7 +47,7 @@ plans + executes the edits via FFmpeg, streaming progress to a React UI over Web
 - Python venv: `python -m venv .venv` then `.venv\Scripts\Activate.ps1`
 - FFmpeg: install once via `winget install Gyan.FFmpeg`, then verify `ffmpeg -version`
 - Run servers in two terminals: backend `uvicorn backend.main:app --reload`,
-  frontend `cd frontend && npm run dev`
+  frontend `cd frontend && npm run dev`. Or run both at once: `.\scripts\dev.ps1`
 
 ## Env vars (see .env.example)
 OPENAI_API_KEY        # required — GPT-4o + Whisper
@@ -60,7 +60,8 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 2 — wrote the 4 specs (agent, api, frontend, deploy)
 - [x] Day 3 — backend skeleton + PreToolUse lint hook + .mcp.json
 - [x] Day 4 — frontend skeleton (Vite+React+Tailwind v4) + ui-builder sub-agent + Uploader/VideoPlayer/CommandBar/JobStatus
-- [ ] Day 5 — wire stub WebSocket + /scaffold command
+- [x] Day 5 — stub WebSocket wired + verified (test_ws_contract) + /scaffold command. PHASE 1 COMPLETE.
+- [ ] Day 6 — Whisper transcription + POST /upload metadata; first FFmpeg op (extract-audio)
 
 ## Supported edit ops (target — built in Phase 2)
 trim · cut · remove_silence · speed · caption · extract_audio
