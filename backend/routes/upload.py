@@ -1,22 +1,33 @@
-"""POST /upload — accept a video, persist it, return a job with metadata.
+"""POST /upload — accept a video, persist it, probe metadata, start transcription.
 
-Day 3 skeleton: validates type/size and saves the file. ffprobe metadata and
-async Whisper transcription are stubbed with TODOs for Day 6.
+Saves the file, reads real metadata with ffprobe, and kicks off Whisper
+transcription as a background task (fire-and-forget; the result is cached on
+the job and surfaced via GET /jobs/{job_id}). The caption op (Day 9) consumes
+the transcript.
 """
 from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 
 from backend.config import settings
 from backend.jobs import store
+from backend.processing.probe import probe_metadata
+from backend.transcription import transcribe
 
 router = APIRouter()
 
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm"}
 
 
+def _transcribe_job(job_id: str) -> None:
+    job = store.get_job(job_id)
+    if job is None:
+        return
+    job.transcript = transcribe(job.video_path)
+
+
 @router.post("/upload")
-async def upload(file: UploadFile = File(...)):
+async def upload(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     ext = Path(file.filename or "").suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -45,15 +56,9 @@ async def upload(file: UploadFile = File(...)):
             out.write(chunk)
 
     job.video_path = str(dest)
+    job.metadata = probe_metadata(str(dest))
 
-    # TODO(Day 6): probe real metadata with ffprobe.
-    job.metadata = {
-        "duration_s": 0.0,
-        "width": 0,
-        "height": 0,
-        "fps": 0.0,
-        "has_audio": True,
-    }
-    # TODO(Day 6): fire async Whisper transcription, cache result by job_id.
+    # Fire-and-forget transcription (runs in a threadpool after the response).
+    background_tasks.add_task(_transcribe_job, job.job_id)
 
     return {"job_id": job.job_id, "filename": job.filename, "metadata": job.metadata}

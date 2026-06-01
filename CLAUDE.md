@@ -61,7 +61,8 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 3 — backend skeleton + PreToolUse lint hook + .mcp.json
 - [x] Day 4 — frontend skeleton (Vite+React+Tailwind v4) + ui-builder sub-agent + Uploader/VideoPlayer/CommandBar/JobStatus
 - [x] Day 5 — stub WebSocket wired + verified (test_ws_contract) + /scaffold command. PHASE 1 COMPLETE.
-- [ ] Day 6 — Whisper transcription + POST /upload metadata; first FFmpeg op (extract-audio)
+- [x] Day 6 — Whisper transcription + real ffprobe metadata on upload; add-ffmpeg-op skill; extract_audio op (working, tested)
+- [ ] Day 7 — LangGraph parse_command node (GPT-4o function calling → EditOp plan)
 
 ## Supported edit ops (target — built in Phase 2)
 trim · cut · remove_silence · speed · caption · extract_audio

@@ -4,6 +4,7 @@ uvicorn[standard]>=0.29
 python-multipart>=0.0.9      # file uploads
 websockets>=12.0
 python-dotenv>=1.0
+pydantic-settings>=2.0       # config loading (backend/config.py)
 
 # ── AI / agent ──
 openai>=1.30                 # GPT-4o + Whisper
