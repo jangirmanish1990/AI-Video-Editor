@@ -70,4 +70,3 @@ ai-video-editor/
 ├── .env.example
 └── .gitignore
 ```
-# AI-Video-Editor

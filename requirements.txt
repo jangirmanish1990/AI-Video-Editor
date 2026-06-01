@@ -21,5 +21,7 @@ pytest>=8.0
 flake8>=7.0
 httpx>=0.27                  # test client for FastAPI
 
+pydantic-settings>=2.0
+
 # ── Optional observability ──
 # langsmith>=0.1

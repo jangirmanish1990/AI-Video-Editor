@@ -6,12 +6,29 @@
       "Write",
       "Edit",
       "Bash(python:*)",
+      "Bash(python -m:*)",
       "Bash(pytest:*)",
       "Bash(flake8:*)",
+      "Bash(uvicorn:*)",
       "Bash(npm:*)",
       "Bash(git:*)",
-      "Bash(ffmpeg:*)"
+      "Bash(gh:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(ffprobe:*)"
     ]
   },
-  "_note": "Hooks (PreToolUse lint, PostToolUse pytest) are added on Day 3. See CLAUDE.md status."
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .claude/hooks/lint_python.py"
+          }
+        ]
+      }
+    ]
+  },
+  "_note": "PostToolUse pytest hook is added on Day 11. The PreToolUse hook lints Python content before writes (see .claude/hooks/lint_python.py)."
 }
