@@ -7,7 +7,7 @@ implemented, an `fn` callable following the op contract:
 Ops are filled in across Days 6-9 via the add-ffmpeg-op skill. Entries whose
 `fn` is still None are planned but not yet executable.
 """
-from backend.processing.ops import cut, extract_audio, remove_silence, speed, trim
+from backend.processing.ops import caption, cut, extract_audio, remove_silence, speed, trim
 
 OPS = [
     {
@@ -38,7 +38,7 @@ OPS = [
         "op": "caption",
         "description": "Burn the Whisper transcript into the video as subtitles.",
         "params_schema": {},
-        "fn": None,
+        "fn": caption.run,
     },
     {
         "op": "extract_audio",

@@ -6,7 +6,7 @@ import pytest
 
 from backend import transcription
 from backend.config import settings
-from backend.processing.ops import cut, extract_audio, remove_silence, speed, trim
+from backend.processing.ops import caption, cut, extract_audio, remove_silence, speed, trim
 from backend.processing.probe import probe_metadata
 
 ffmpeg_missing = shutil.which("ffmpeg") is None
@@ -133,3 +133,46 @@ def test_remove_silence_drops_silent_gap(tmp_path):
     remove_silence.run(str(src), str(out), {"threshold_db": -30, "min_silence_ms": 500})
     # Should be shorter than the 4s original (the 2s silent gap is removed).
     assert probe_metadata(str(out))["duration_s"] < 3.5
+
+
+def test_srt_timestamp_format():
+    assert caption._format_timestamp(3661.5) == "01:01:01,500"
+    assert caption._format_timestamp(0) == "00:00:00,000"
+
+
+def test_srt_build_numbers_blocks():
+    segs = [
+        {"start": 0, "end": 1.5, "text": " Hello "},
+        {"start": 1.5, "end": 3, "text": "World"},
+    ]
+    srt = caption._build_srt(segs)
+    assert "1\n00:00:00,000 --> 00:00:01,500\nHello" in srt
+    assert "2\n00:00:01,500 --> 00:00:03,000\nWorld" in srt
+
+
+def test_caption_without_transcript_raises(tmp_path, monkeypatch):
+    monkeypatch.setattr("backend.processing.ops.caption.transcribe", lambda p: None)
+    src = tmp_path / "x.mp4"
+    src.write_bytes(b"\x00")
+    with pytest.raises(RuntimeError):
+        caption.run(str(src), str(tmp_path / "o.mp4"), {})
+
+
+@skip_no_ffmpeg
+def test_caption_burns_and_writes_srt(tmp_path):
+    src = tmp_path / "src.mp4"
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=duration=3:size=320x240:rate=10",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-shortest", str(src)],
+        check=True, capture_output=True,
+    )
+    out = tmp_path / "captioned.mp4"
+    transcript = [
+        {"start": 0, "end": 1.5, "text": "Hello world"},
+        {"start": 1.5, "end": 3, "text": "second line"},
+    ]
+    caption.run(str(src), str(out), {"transcript": transcript})
+
+    assert out.exists() and out.stat().st_size > 0
+    assert (tmp_path / "captioned.srt").exists()
+    assert probe_metadata(str(out))["duration_s"] > 2.0

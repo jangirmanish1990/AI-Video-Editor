@@ -56,14 +56,22 @@ def execute_plan(state: AgentState, on_progress: Callable | None = None) -> dict
 
         suffix = ".mp3" if op_name == "extract_audio" else ".mp4"
         out_path = _output_path(job_id, index, suffix)
+
+        # caption needs the transcript, which lives on the state, not in params.
+        if op_name == "caption" and "transcript" not in params:
+            params = {**params, "transcript": state.get("transcript")}
+
         started = time.monotonic()
         try:
             entry["fn"](current, out_path, params)
-        except ffmpeg.Error as exc:
-            stderr = (exc.stderr or b"").decode("utf-8", errors="ignore")[-800:]
+        except Exception as exc:
+            if isinstance(exc, ffmpeg.Error):
+                detail = (exc.stderr or b"").decode("utf-8", errors="ignore")[-800:]
+            else:
+                detail = str(exc)[-800:]
             results.append({
                 "op": op_name, "status": "error", "output_path": None,
-                "stderr": stderr, "duration_s": round(time.monotonic() - started, 2),
+                "stderr": detail, "duration_s": round(time.monotonic() - started, 2),
             })
             return {"results": results, "status": "error",
                     "error": f"The '{op_name}' step failed."}
