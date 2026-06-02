@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Uploader from "./components/Uploader";
 import VideoPlayer from "./components/VideoPlayer";
+import WaveformTimeline from "./components/WaveformTimeline";
 import CommandBar from "./components/CommandBar";
 import JobStatus from "./components/JobStatus";
 import { useJobSocket } from "./hooks/useJobSocket";
@@ -49,7 +50,7 @@ export default function App() {
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_340px]">
           <div className="flex flex-col gap-4">
             <VideoPlayer job={currentJob} />
-            {/* Day 13: <WaveformTimeline /> mounts here */}
+            <WaveformTimeline job={currentJob} />
             <CommandBar onRun={handleRun} disabled={!currentJob} running={running} />
             {runError && <p className="text-sm text-red-400">{runError}</p>}
           </div>

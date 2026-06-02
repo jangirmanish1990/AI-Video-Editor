@@ -37,6 +37,11 @@ export async function getOps() {
   return jsonOrThrow(resp); // [{ op, description, params_schema }]
 }
 
+export async function getSilences(jobId) {
+  const resp = await fetch(`${API_URL}/silences/${jobId}`);
+  return jsonOrThrow(resp); // { silences: [{start, end}], duration }
+}
+
 export function downloadUrl(jobId) {
   return `${API_URL}/download/${jobId}`;
 }

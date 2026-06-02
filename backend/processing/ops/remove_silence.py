@@ -42,6 +42,13 @@ def _detect_silences(input_path: str, threshold_db: int, min_silence_s: float) -
     return list(zip(starts, ends))
 
 
+def detect_silences(
+    input_path: str, threshold_db: int = -40, min_silence_s: float = 0.5
+) -> list[tuple]:
+    """Public wrapper: return (start, end) silent intervals for a media file."""
+    return _detect_silences(input_path, threshold_db, min_silence_s)
+
+
 def _keep_segments(silences: list[tuple], duration: float) -> list[tuple]:
     """Invert silent intervals into the segments to keep."""
     keeps = []

@@ -67,3 +67,41 @@ def test_upload_oversize_rejected(monkeypatch):
     payload = b"\x00" * (1024 * 1024)  # 1 MB, exceeds the 0 MB cap
     resp = client.post("/upload", files={"file": ("big.mp4", payload, "video/mp4")})
     assert resp.status_code == 400
+
+
+@skip_no_ffmpeg
+def test_silences_endpoint_detects_gap(tmp_path):
+    # 1s tone, 2s silence, 1s tone -> at least one silent interval.
+    src = tmp_path / "gap.mp4"
+    subprocess.run(
+        ["ffmpeg", "-y",
+         "-f", "lavfi", "-i", "testsrc=duration=4:size=160x120:rate=10",
+         "-f", "lavfi", "-i",
+         "aevalsrc='sin(2*PI*440*t)*lt(t,1)+sin(2*PI*440*t)*gt(t,3)':d=4",
+         "-shortest", str(src)],
+        check=True, capture_output=True,
+    )
+    job = store.create_job(filename="gap.mp4")
+    job.video_path = str(src)
+    job.metadata = {"duration_s": 4, "has_audio": True}
+
+    resp = client.get(f"/silences/{job.job_id}")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "silences" in body
+    assert len(body["silences"]) >= 1
+    first = body["silences"][0]
+    assert "start" in first and "end" in first
+
+
+def test_silences_unknown_job_is_404():
+    assert client.get("/silences/missing").status_code == 404
+
+
+def test_silences_no_audio_returns_empty():
+    job = store.create_job(filename="x.mp4")
+    job.video_path = "x.mp4"
+    job.metadata = {"duration_s": 5.0, "has_audio": False}
+    resp = client.get(f"/silences/{job.job_id}")
+    assert resp.status_code == 200
+    assert resp.json()["silences"] == []
