@@ -84,3 +84,22 @@ def test_llm_exception_reports_key_hint(monkeypatch):
     out = parser.parse_command({"command": "trim it"})
     assert out["status"] == "error"
     assert "OPENAI_API_KEY" in out["error"]
+
+
+def test_user_message_includes_region():
+    from backend.agent import prompts
+
+    msg = prompts.user_message(
+        "trim to selection",
+        {"duration_s": 20, "has_audio": True, "region": {"start": 3.0, "end": 8.5}},
+        None,
+    )
+    assert "3.00s to 8.50s" in msg
+    assert "selection" in msg.lower()
+
+
+def test_user_message_no_region_when_absent():
+    from backend.agent import prompts
+
+    msg = prompts.user_message("trim it", {"duration_s": 20, "has_audio": True}, None)
+    assert "selection" not in msg.lower()

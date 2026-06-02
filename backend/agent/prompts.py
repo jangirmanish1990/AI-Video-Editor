@@ -42,6 +42,12 @@ def user_message(command: str, metadata: dict | None, transcript: list[dict] | N
     if meta.get("duration_s"):
         lines.append(f"Video duration: {meta['duration_s']} seconds.")
     lines.append(f"Audio present: {bool(meta.get('has_audio'))}.")
+    region = meta.get("region")
+    if region and region.get("start") is not None and region.get("end") is not None:
+        lines.append(
+            f'Selected region: {float(region["start"]):.2f}s to {float(region["end"]):.2f}s. '
+            f'"the selection" or "selected part" refers to this range.'
+        )
     if transcript:
         text = " ".join(seg.get("text", "") for seg in transcript).strip()
         if text:

@@ -71,7 +71,14 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 13 — WaveformTimeline (Wavesurfer v7) + /silences endpoint; silent gaps highlighted on the waveform.
 - [x] Day 14 — JobStatus polish: elapsed timer + live per-op checklist (done/running/failed states).
 - [x] Day 15 — HistoryPanel: completed edits persisted to localStorage (command, ops, time, download).
-- [ ] Day 16 — region selection on the waveform → "trim to selection"
+- [x] Day 16 — waveform drag-selection → region sent with command; planner prompt uses "the selection".
+- [ ] Day 17 — before/after split preview after an edit
+
+## Day 19 backlog (polish pass)
+- Add a "New video / start over" control in the header — resets currentJob + run
+  state so the user can load a different clip without using browser Back (which
+  currently dumps them to the empty upload screen and loses the session).
+  Surfaced during Day 15 end-to-end testing.
 
 ## Supported edit ops (target — built in Phase 2)
 trim · cut · remove_silence · speed · caption · extract_audio

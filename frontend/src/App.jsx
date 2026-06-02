@@ -23,6 +23,7 @@ export default function App() {
   const [run, setRun] = useState({ jobId: null, token: 0, command: "" });
   const [runError, setRunError] = useState(null);
   const [history, setHistory] = useState(loadHistory);
+  const [selection, setSelection] = useState(null);
   const recordedRef = useRef(null);
 
   const socket = useJobSocket(run.jobId, run.token);
@@ -55,7 +56,7 @@ export default function App() {
     if (!currentJob) return;
     setRunError(null);
     try {
-      await startEdit(currentJob.job_id, command);
+      await startEdit(currentJob.job_id, command, selection);
       setRun((prev) => ({ jobId: currentJob.job_id, token: prev.token + 1, command }));
     } catch (err) {
       setRunError(err.message);
@@ -84,7 +85,7 @@ export default function App() {
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_340px]">
           <div className="flex flex-col gap-4">
             <VideoPlayer job={currentJob} />
-            <WaveformTimeline job={currentJob} />
+            <WaveformTimeline job={currentJob} onSelect={setSelection} />
             <CommandBar onRun={handleRun} disabled={!currentJob} running={running} />
             {runError && <p className="text-sm text-red-400">{runError}</p>}
           </div>
