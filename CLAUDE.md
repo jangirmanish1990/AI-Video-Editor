@@ -67,7 +67,8 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 9 — caption op (transcript → SRT → burned subtitles). ALL 6 OPS IMPLEMENTED.
 - [x] Day 10 — full graph (parse→execute→validate) wired into /edit + WebSocket; live end-to-end. PHASE 2 COMPLETE.
 - [x] Day 11 — PostToolUse pytest hook (auto-runs backend tests on edit) + test-writer sub-agent + route coverage. 40 tests.
-- [ ] Day 12 — /debug-agent command (replay last run, show plan JSON + FFmpeg stderr); polish error surfacing
+- [x] Day 12 — /debug-agent command + debug logging (logs/last_run.json) + friendly op-error hints + plan persisted. PHASE 2 FULLY DONE.
+- [ ] Day 13 — Phase 3 begins: WaveformTimeline (Wavesurfer.js) via ui-builder
 
 ## Supported edit ops (target — built in Phase 2)
 trim · cut · remove_silence · speed · caption · extract_audio

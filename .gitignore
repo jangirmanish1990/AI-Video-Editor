@@ -43,3 +43,6 @@ Thumbs.db
 # ── Claude Code local state (keep .claude/ committed, ignore local caches) ──
 .claude/local/
 .claude/*.local.json
+
+# ── Agent debug logs ──
+logs/

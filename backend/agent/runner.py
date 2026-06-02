@@ -1,16 +1,21 @@
 """Runs the agent graph for a job and emits WebSocket events.
 
-`emit(event)` is a callback that delivers one JSON event to the client (the
-route wires it to the socket). This function is transport-agnostic and runs
-synchronously, so it's safe to call from a worker thread.
-
-Event types match specs/api.md: status, plan, progress, result, error.
+`emit(event)` delivers one JSON event to the client. Transport-agnostic and
+synchronous, so it's safe to call from a worker thread. After the run it
+persists the plan + results to the job and writes a debug record for the
+/debug-agent command. Event types match specs/api.md.
 """
 from __future__ import annotations
 
 from typing import Callable
 
+from backend.agent import debug_log
+from backend.agent.errors import friendly_error
 from backend.agent.graph import build_graph
+
+
+def _failed_op(results: list[dict]) -> str | None:
+    return next((r["op"] for r in results if r.get("status") == "error"), None)
 
 
 def run_agent(job, emit: Callable[[dict], None]) -> None:
@@ -39,21 +44,26 @@ def run_agent(job, emit: Callable[[dict], None]) -> None:
                     emit({"type": "plan", "plan": delta["plan"]})
                     emit({"type": "status", "status": "executing"})
     except Exception:
-        job.status = "error"
-        job.error = "The edit failed unexpectedly."
-        emit({"type": "error", "message": job.error})
-        return
+        final["status"] = "error"
+        final["error"] = "The edit failed unexpectedly."
+
+    # Persist run detail (visible via GET /jobs and /debug-agent).
+    job.plan = final.get("plan")
+    job.results = final.get("results", [])
+    debug_log.write_run(job, final)
 
     if final.get("status") == "error":
         job.status = "error"
-        job.error = final.get("error", "The edit failed.")
-        job.results = final.get("results", [])
-        emit({"type": "error", "message": job.error})
+        message = friendly_error(
+            final.get("error", "The edit failed."),
+            _failed_op(final.get("results", [])),
+        )
+        job.error = message
+        emit({"type": "error", "message": message})
         return
 
     job.status = "done"
     job.output_path = final.get("output_path")
-    job.results = final.get("results", [])
     emit({
         "type": "result",
         "output_url": f"/download/{job.job_id}",

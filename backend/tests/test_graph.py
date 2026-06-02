@@ -7,6 +7,7 @@ import subprocess
 import pytest
 
 from backend.agent import runner, validator
+from backend.agent.errors import friendly_error
 from backend.processing.probe import probe_metadata
 
 skip_no_ffmpeg = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg not installed")
@@ -80,3 +81,40 @@ def test_run_agent_parse_error_short_circuits(monkeypatch):
     assert job.status == "error"
     # never reached execution
     assert "progress" not in [e["type"] for e in events]
+
+
+def test_friendly_error_adds_op_hint():
+    msg = friendly_error("The 'speed' step failed.", "speed")
+    assert "0.5 and 4" in msg
+    # unknown op -> base message unchanged
+    assert friendly_error("boom", "nonsense") == "boom"
+
+
+def test_run_agent_error_includes_op_hint_and_persists_plan(monkeypatch):
+    monkeypatch.setattr(
+        "backend.agent.parser.parse_command",
+        lambda state: {"plan": [{"op": "caption", "params": {}}], "status": "executing"},
+    )
+    # caption with no transcript and no key -> raises -> execute error
+    monkeypatch.setattr("backend.processing.ops.caption.transcribe", lambda path: None)
+    job = _Job(video_path="dummy.mp4", command="add captions", transcript=None)
+
+    events = []
+    runner.run_agent(job, events.append)
+
+    assert events[-1]["type"] == "error"
+    assert "transcript" in events[-1]["message"].lower()
+    assert job.plan == [{"op": "caption", "params": {}}]  # plan persisted
+
+
+def test_debug_log_written(tmp_path, monkeypatch):
+    monkeypatch.setattr("backend.agent.debug_log.LOG_DIR", tmp_path)
+    monkeypatch.setattr(
+        "backend.agent.parser.parse_command",
+        lambda state: {"status": "error", "error": "could not understand"},
+    )
+    job = _Job(command="gibberish", video_path="x.mp4")
+    runner.run_agent(job, lambda e: None)
+
+    assert (tmp_path / "last_run.json").exists()
+    assert (tmp_path / f"{job.job_id}.json").exists()
