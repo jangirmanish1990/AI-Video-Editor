@@ -7,32 +7,32 @@ implemented, an `fn` callable following the op contract:
 Ops are filled in across Days 6-9 via the add-ffmpeg-op skill. Entries whose
 `fn` is still None are planned but not yet executable.
 """
-from backend.processing.ops import extract_audio
+from backend.processing.ops import cut, extract_audio, remove_silence, speed, trim
 
 OPS = [
     {
         "op": "trim",
         "description": "Keep only the time range between start and end (seconds).",
         "params_schema": {"start": "float", "end": "float"},
-        "fn": None,
+        "fn": trim.run,
     },
     {
         "op": "cut",
         "description": "Remove the range between start and end, joining the remainder.",
         "params_schema": {"start": "float", "end": "float"},
-        "fn": None,
+        "fn": cut.run,
     },
     {
         "op": "remove_silence",
         "description": "Auto-remove silent gaps below a loudness threshold.",
         "params_schema": {"threshold_db": "int=-40", "min_silence_ms": "int=500"},
-        "fn": None,
+        "fn": remove_silence.run,
     },
     {
         "op": "speed",
         "description": "Change playback speed by a factor (0.5-4.0).",
         "params_schema": {"factor": "float"},
-        "fn": None,
+        "fn": speed.run,
     },
     {
         "op": "caption",

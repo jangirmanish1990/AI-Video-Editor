@@ -6,7 +6,7 @@ import pytest
 
 from backend import transcription
 from backend.config import settings
-from backend.processing.ops import extract_audio
+from backend.processing.ops import cut, extract_audio, remove_silence, speed, trim
 from backend.processing.probe import probe_metadata
 
 ffmpeg_missing = shutil.which("ffmpeg") is None
@@ -61,3 +61,75 @@ def test_probe_bad_file_fails_soft(tmp_path):
 def test_transcribe_without_key_returns_none(monkeypatch):
     monkeypatch.setattr(settings, "openai_api_key", "")
     assert transcription.transcribe("anything.mp4") is None
+
+
+@skip_no_ffmpeg
+def test_trim_shortens_to_range(tmp_path):
+    src = tmp_path / "src.mp4"
+    _make_test_video(src)  # ~1s; remake longer for a meaningful trim
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=duration=4:size=128x96:rate=10",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=4", "-shortest", str(src)],
+        check=True, capture_output=True,
+    )
+    out = tmp_path / "trim.mp4"
+    trim.run(str(src), str(out), {"start": 1, "end": 3})
+    assert 1.5 < probe_metadata(str(out))["duration_s"] < 2.5
+
+
+@skip_no_ffmpeg
+def test_cut_removes_middle(tmp_path):
+    src = tmp_path / "src.mp4"
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=duration=4:size=128x96:rate=10",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=4", "-shortest", str(src)],
+        check=True, capture_output=True,
+    )
+    out = tmp_path / "cut.mp4"
+    cut.run(str(src), str(out), {"start": 1, "end": 3})  # remove 2s of 4s -> ~2s
+    assert 1.4 < probe_metadata(str(out))["duration_s"] < 2.6
+
+
+@skip_no_ffmpeg
+def test_speed_halves_duration(tmp_path):
+    src = tmp_path / "src.mp4"
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=duration=4:size=128x96:rate=10",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=4", "-shortest", str(src)],
+        check=True, capture_output=True,
+    )
+    out = tmp_path / "fast.mp4"
+    speed.run(str(src), str(out), {"factor": 2.0})  # 4s -> ~2s
+    assert 1.5 < probe_metadata(str(out))["duration_s"] < 2.6
+
+
+@skip_no_ffmpeg
+def test_remove_silence_passthrough_when_no_silence(tmp_path):
+    # Continuous tone => no silence detected => output ~ same length.
+    src = tmp_path / "tone.mp4"
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=duration=3:size=128x96:rate=10",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-shortest", str(src)],
+        check=True, capture_output=True,
+    )
+    out = tmp_path / "desilenced.mp4"
+    remove_silence.run(str(src), str(out), {"threshold_db": -40, "min_silence_ms": 500})
+    assert probe_metadata(str(out))["duration_s"] > 2.0
+
+
+@skip_no_ffmpeg
+def test_remove_silence_drops_silent_gap(tmp_path):
+    # 1s tone + 2s silence + 1s tone => removing silence should yield ~2s.
+    src = tmp_path / "gapped.mp4"
+    subprocess.run(
+        ["ffmpeg", "-y",
+         "-f", "lavfi", "-i", "testsrc=duration=4:size=128x96:rate=10",
+         "-f", "lavfi", "-i",
+         "aevalsrc='sin(2*PI*440*t)*lt(t,1)+sin(2*PI*440*t)*gt(t,3)':d=4",
+         "-shortest", str(src)],
+        check=True, capture_output=True,
+    )
+    out = tmp_path / "tight.mp4"
+    remove_silence.run(str(src), str(out), {"threshold_db": -30, "min_silence_ms": 500})
+    # Should be shorter than the 4s original (the 2s silent gap is removed).
+    assert probe_metadata(str(out))["duration_s"] < 3.5
