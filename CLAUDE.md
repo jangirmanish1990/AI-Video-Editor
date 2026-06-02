@@ -69,7 +69,8 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 11 — PostToolUse pytest hook (auto-runs backend tests on edit) + test-writer sub-agent + route coverage. 40 tests.
 - [x] Day 12 — /debug-agent command + debug logging (logs/last_run.json) + friendly op-error hints + plan persisted. PHASE 2 FULLY DONE.
 - [x] Day 13 — WaveformTimeline (Wavesurfer v7) + /silences endpoint; silent gaps highlighted on the waveform.
-- [ ] Day 14 — live JobStatus progress polish (animated, est. time) — already partly built; refine
+- [x] Day 14 — JobStatus polish: elapsed timer + live per-op checklist (done/running/failed states).
+- [ ] Day 15 — edit history panel (localStorage) via /scaffold or ui-builder
 
 ## Supported edit ops (target — built in Phase 2)
 trim · cut · remove_silence · speed · caption · extract_audio
