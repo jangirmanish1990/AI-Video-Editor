@@ -28,7 +28,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .claude/hooks/run_tests.py"
+          }
+        ]
+      }
     ]
-  },
-  "_note": "PostToolUse pytest hook is added on Day 11. The PreToolUse hook lints Python content before writes (see .claude/hooks/lint_python.py)."
+  }
 }

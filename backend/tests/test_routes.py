@@ -1,0 +1,69 @@
+"""Route coverage for upload / jobs / download (generated via the test-writer
+sub-agent). Transcription is stubbed so uploads never hit the Whisper API.
+"""
+import shutil
+import subprocess
+
+import pytest
+
+from fastapi.testclient import TestClient
+
+from backend.jobs import store
+from backend.main import app
+
+client = TestClient(app)
+skip_no_ffmpeg = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg not installed")
+
+
+def _make_video(path, seconds=2):
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", f"testsrc=duration={seconds}:size=160x120:rate=10",
+         "-f", "lavfi", "-i", f"sine=frequency=440:duration={seconds}", "-shortest", str(path)],
+        check=True, capture_output=True,
+    )
+
+
+@skip_no_ffmpeg
+def test_upload_returns_real_metadata(tmp_path, monkeypatch):
+    monkeypatch.setattr("backend.routes.upload.settings.upload_dir", str(tmp_path))
+    monkeypatch.setattr("backend.routes.upload.transcribe", lambda path: [])  # no Whisper call
+    src = tmp_path / "clip.mp4"
+    _make_video(src, 2)
+
+    with open(src, "rb") as handle:
+        resp = client.post("/upload", files={"file": ("clip.mp4", handle.read(), "video/mp4")})
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "job_id" in data
+    assert data["metadata"]["width"] == 160 and data["metadata"]["height"] == 120
+    assert data["metadata"]["duration_s"] > 0
+    assert data["metadata"]["has_audio"] is True
+
+
+def test_jobs_lookup_returns_public_record():
+    job = store.create_job(filename="x.mp4")
+    job.metadata = {"duration_s": 3.0}
+    resp = client.get(f"/jobs/{job.job_id}")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["job_id"] == job.job_id
+    # server-only fields are stripped by to_public()
+    assert "video_path" not in body and "transcript" not in body
+
+
+def test_download_without_output_is_404():
+    job = store.create_job(filename="x.mp4")
+    resp = client.get(f"/download/{job.job_id}")
+    assert resp.status_code == 404
+
+
+def test_download_unknown_job_is_404():
+    assert client.get("/download/missing").status_code == 404
+
+
+def test_upload_oversize_rejected(monkeypatch):
+    monkeypatch.setattr("backend.routes.upload.settings.max_upload_mb", 0)
+    payload = b"\x00" * (1024 * 1024)  # 1 MB, exceeds the 0 MB cap
+    resp = client.post("/upload", files={"file": ("big.mp4", payload, "video/mp4")})
+    assert resp.status_code == 400

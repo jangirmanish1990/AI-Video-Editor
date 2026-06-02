@@ -66,7 +66,8 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 8 — execute_plan node + ffmpeg-runner sub-agent; trim/cut/speed/remove_silence ops (real, tested). 5 of 6 ops implemented.
 - [x] Day 9 — caption op (transcript → SRT → burned subtitles). ALL 6 OPS IMPLEMENTED.
 - [x] Day 10 — full graph (parse→execute→validate) wired into /edit + WebSocket; live end-to-end. PHASE 2 COMPLETE.
-- [ ] Day 11 — PostToolUse pytest hook + test-writer sub-agent (Phase 2 hardening)
+- [x] Day 11 — PostToolUse pytest hook (auto-runs backend tests on edit) + test-writer sub-agent + route coverage. 40 tests.
+- [ ] Day 12 — /debug-agent command (replay last run, show plan JSON + FFmpeg stderr); polish error surfacing
 
 ## Supported edit ops (target — built in Phase 2)
 trim · cut · remove_silence · speed · caption · extract_audio
