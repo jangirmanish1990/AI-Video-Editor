@@ -1,15 +1,18 @@
-"""POST /edit and WS /ws/{job_id}.
+"""POST /edit and WS /ws/{job_id} — the live agent run.
 
-Day 3 skeleton: /edit validates the job and flips status to 'planning'. The WS
-endpoint streams a stubbed event sequence so the frontend can be built against
-the real message schema (see specs/api.md) before the agent exists. The real
-LangGraph run + live events are wired Days 7-10.
+/edit records the command and returns 202; the client then opens the WebSocket,
+which runs the LangGraph agent and streams events (status, plan, progress,
+result, error) per specs/api.md.
+
+The agent is synchronous (FFmpeg + LangGraph), so it runs in a worker thread;
+events cross back to the event loop via a thread-safe queue.
 """
 import asyncio
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
+from backend.agent.runner import run_agent
 from backend.jobs import store
 
 router = APIRouter()
@@ -32,9 +35,9 @@ async def edit(req: EditRequest):
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found.")
     job.command = req.command
+    if req.region is not None:
+        job.metadata = {**(job.metadata or {}), "region": req.region.model_dump()}
     job.status = "planning"
-    # TODO(Day 7-10): launch the LangGraph agent in a background task and have it
-    # emit events to the job's WebSocket. For now the WS streams a stub sequence.
     return {"job_id": job.job_id, "status": job.status}
 
 
@@ -46,22 +49,32 @@ async def job_socket(websocket: WebSocket, job_id: str):
         await websocket.send_json({"type": "error", "message": "Job not found."})
         await websocket.close()
         return
-
-    try:
-        # --- STUB sequence (replaced Day 10 by real agent events) ---
-        await websocket.send_json({"type": "status", "status": "planning"})
-        await asyncio.sleep(0.3)
-        await websocket.send_json(
-            {"type": "plan", "plan": [{"op": "trim", "params": {"start": 0, "end": 30}}]}
-        )
-        await websocket.send_json({"type": "status", "status": "executing"})
-        await websocket.send_json({"type": "progress", "op": "trim", "index": 1, "total": 1})
-        await asyncio.sleep(0.3)
-        await websocket.send_json(
-            {"type": "result", "output_url": f"/download/{job_id}", "duration_s": 30.0}
-        )
-        await websocket.send_json({"type": "status", "status": "done"})
-    except WebSocketDisconnect:
+    if not job.command:
+        await websocket.send_json({"type": "error", "message": "No command set. Call /edit first."})
+        await websocket.close()
         return
+
+    loop = asyncio.get_running_loop()
+    queue: asyncio.Queue = asyncio.Queue()
+
+    def emit(event: dict) -> None:
+        loop.call_soon_threadsafe(queue.put_nowait, event)
+
+    def worker() -> None:
+        try:
+            run_agent(job, emit)
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, None)  # sentinel
+
+    future = loop.run_in_executor(None, worker)
+    try:
+        while True:
+            event = await queue.get()
+            if event is None:
+                break
+            await websocket.send_json(event)
+    except WebSocketDisconnect:
+        pass
     finally:
+        await future
         await websocket.close()

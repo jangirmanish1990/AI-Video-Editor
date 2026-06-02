@@ -1,7 +1,11 @@
-"""Verifies the /ws/{job_id} event stream matches the schema the frontend's
-useJobSocket hook consumes (see specs/api.md). This is the backend<->frontend
-contract; if it drifts, the UI silently breaks, so we lock it with a test.
+"""Verifies the /ws/{job_id} stream still matches the schema the frontend's
+useJobSocket consumes (specs/api.md), now driven by the REAL agent. parse is
+mocked (no API key/cost); execute + validate run real FFmpeg.
 """
+import shutil
+import subprocess
+
+import pytest
 from starlette.websockets import WebSocketDisconnect
 
 from fastapi.testclient import TestClient
@@ -10,36 +14,49 @@ from backend.jobs import store
 from backend.main import app
 
 client = TestClient(app)
+skip_no_ffmpeg = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg not installed")
 
 
-def test_ws_streams_expected_contract():
-    job = store.create_job(filename="clip.mp4")
+def _make_video(path, seconds=4):
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", f"testsrc=duration={seconds}:size=160x120:rate=10",
+         "-f", "lavfi", "-i", f"sine=frequency=440:duration={seconds}", "-shortest", str(path)],
+        check=True, capture_output=True,
+    )
 
-    started = client.post("/edit", json={"job_id": job.job_id, "command": "trim to 30s"})
-    assert started.status_code == 202
 
-    types_seen = []
-    plan_payload = None
-    result_payload = None
+@skip_no_ffmpeg
+def test_ws_streams_real_agent(tmp_path, monkeypatch):
+    monkeypatch.setattr("backend.agent.executor.settings.upload_dir", str(tmp_path))
+    monkeypatch.setattr(
+        "backend.agent.parser.parse_command",
+        lambda state: {"plan": [{"op": "trim", "params": {"start": 0, "end": 2}}],
+                       "status": "executing"},
+    )
+    src = tmp_path / "src.mp4"
+    _make_video(src, 4)
 
+    job = store.create_job(filename="src.mp4")
+    job.video_path = str(src)
+    job.metadata = {"duration_s": 4}
+
+    resp = client.post("/edit", json={"job_id": job.job_id, "command": "trim to 2s"})
+    assert resp.status_code == 202
+
+    types_seen, result = [], None
     with client.websocket_connect(f"/ws/{job.job_id}") as ws:
         try:
             while True:
                 msg = ws.receive_json()
                 types_seen.append(msg["type"])
-                if msg["type"] == "plan":
-                    plan_payload = msg["plan"]
                 if msg["type"] == "result":
-                    result_payload = msg
+                    result = msg
         except WebSocketDisconnect:
-            pass  # server closes after the final 'done' status
+            pass
 
-    # Every event type the frontend switches on must appear.
     assert {"status", "plan", "progress", "result"}.issubset(set(types_seen))
-
-    # plan is a list of {op, params}; result carries an output_url.
-    assert isinstance(plan_payload, list) and "op" in plan_payload[0]
-    assert "output_url" in result_payload
+    assert result and result["output_url"].endswith(job.job_id)
+    assert job.status == "done"
 
 
 def test_ws_unknown_job_reports_error():

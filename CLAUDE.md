@@ -65,7 +65,8 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 7 — parse_command node (GPT-4o function calling → validated EditOp plan); AgentState/EditOp/OpResult types; prompts. Tests mocked.
 - [x] Day 8 — execute_plan node + ffmpeg-runner sub-agent; trim/cut/speed/remove_silence ops (real, tested). 5 of 6 ops implemented.
 - [x] Day 9 — caption op (transcript → SRT → burned subtitles). ALL 6 OPS IMPLEMENTED.
-- [ ] Day 10 — assemble the full graph (parse→execute→validate) + wire into /edit route & WebSocket (live end-to-end)
+- [x] Day 10 — full graph (parse→execute→validate) wired into /edit + WebSocket; live end-to-end. PHASE 2 COMPLETE.
+- [ ] Day 11 — PostToolUse pytest hook + test-writer sub-agent (Phase 2 hardening)
 
 ## Supported edit ops (target — built in Phase 2)
 trim · cut · remove_silence · speed · caption · extract_audio
