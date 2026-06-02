@@ -1,26 +1,62 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Uploader from "./components/Uploader";
 import VideoPlayer from "./components/VideoPlayer";
 import WaveformTimeline from "./components/WaveformTimeline";
 import CommandBar from "./components/CommandBar";
 import JobStatus from "./components/JobStatus";
+import HistoryPanel from "./components/HistoryPanel";
 import { useJobSocket } from "./hooks/useJobSocket";
 import { startEdit } from "./api";
 
+const HISTORY_KEY = "ave_history";
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
 export default function App() {
-  const [currentJob, setCurrentJob] = useState(null); // { job_id, filename, metadata, file }
-  const [run, setRun] = useState({ jobId: null, token: 0 }); // bump token to re-run
+  const [currentJob, setCurrentJob] = useState(null);
+  const [run, setRun] = useState({ jobId: null, token: 0, command: "" });
   const [runError, setRunError] = useState(null);
+  const [history, setHistory] = useState(loadHistory);
+  const recordedRef = useRef(null);
 
   const socket = useJobSocket(run.jobId, run.token);
   const running = socket.status && socket.status !== "done" && !socket.error;
+
+  // Persist history whenever it changes.
+  useEffect(() => {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch {
+      // storage full / unavailable — non-fatal
+    }
+  }, [history]);
+
+  // Record a completed run once (keyed on the run token).
+  useEffect(() => {
+    if (!socket.result || !currentJob || recordedRef.current === run.token) return;
+    recordedRef.current = run.token;
+    const entry = {
+      id: `${currentJob.job_id}-${run.token}`,
+      jobId: currentJob.job_id,
+      command: run.command,
+      ops: (socket.plan || []).map((p) => p.op),
+      at: Date.now(),
+    };
+    setHistory((prev) => [entry, ...prev].slice(0, 20));
+  }, [socket.result, currentJob, run.token, run.command, socket.plan]);
 
   async function handleRun(command) {
     if (!currentJob) return;
     setRunError(null);
     try {
       await startEdit(currentJob.job_id, command);
-      setRun((prev) => ({ jobId: currentJob.job_id, token: prev.token + 1 }));
+      setRun((prev) => ({ jobId: currentJob.job_id, token: prev.token + 1, command }));
     } catch (err) {
       setRunError(err.message);
     }
@@ -28,7 +64,6 @@ export default function App() {
 
   return (
     <div className="mx-auto flex min-h-full max-w-6xl flex-col px-5 py-8">
-      {/* Header */}
       <header className="mb-8 flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-display text-lg font-bold text-slate-950">
           ▶
@@ -43,7 +78,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main */}
       {!currentJob ? (
         <Uploader onUploaded={setCurrentJob} />
       ) : (
@@ -56,7 +90,8 @@ export default function App() {
           </div>
           <aside className="flex flex-col gap-5">
             <JobStatus jobId={run.jobId} socket={socket} />
-            {/* Day 15: <HistoryPanel /> · Day 18: <OpsReference /> mount here */}
+            <HistoryPanel history={history} onClear={() => setHistory([])} />
+            {/* Day 18: <OpsReference /> mounts here */}
           </aside>
         </div>
       )}
