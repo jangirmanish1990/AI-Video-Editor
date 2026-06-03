@@ -73,7 +73,8 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 15 — HistoryPanel: completed edits persisted to localStorage (command, ops, time, download).
 - [x] Day 16 — waveform drag-selection → region sent with command; planner prompt uses "the selection".
 - [x] Day 17 — BeforeAfter split preview (original vs edited, synced play/pause) shown after an edit.
-- [ ] Day 18 — OpsReference panel (lists supported ops from /ops)
+- [x] Day 18 — OpsReference panel (collapsible; ops from /ops; clickable example commands).
+- [ ] Day 19 — polish pass: empty/loading/error states + "New video" control (see backlog below)
 
 ## Day 19 backlog (polish pass)
 - Add a "New video / start over" control in the header — resets currentJob + run

@@ -6,6 +6,7 @@ import WaveformTimeline from "./components/WaveformTimeline";
 import CommandBar from "./components/CommandBar";
 import JobStatus from "./components/JobStatus";
 import HistoryPanel from "./components/HistoryPanel";
+import OpsReference from "./components/OpsReference";
 import { useJobSocket } from "./hooks/useJobSocket";
 import { startEdit, downloadUrl } from "./api";
 
@@ -114,7 +115,7 @@ export default function App() {
           <aside className="flex flex-col gap-5">
             <JobStatus jobId={run.jobId} socket={socket} />
             <HistoryPanel history={history} onClear={() => setHistory([])} />
-            {/* Day 18: <OpsReference /> mounts here */}
+            <OpsReference onTry={handleRun} canTry={Boolean(currentJob) && !running} />
           </aside>
         </div>
       )}
