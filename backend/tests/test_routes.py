@@ -105,3 +105,36 @@ def test_silences_no_audio_returns_empty():
     resp = client.get(f"/silences/{job.job_id}")
     assert resp.status_code == 200
     assert resp.json()["silences"] == []
+
+
+@skip_no_ffmpeg
+def test_audio_upload_attaches_music(tmp_path, monkeypatch):
+    monkeypatch.setattr("backend.routes.upload.settings.upload_dir", str(tmp_path))
+    music = tmp_path / "song.mp3"
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=330:duration=1", str(music)],
+        check=True, capture_output=True,
+    )
+    job = store.create_job(filename="v.mp4")
+    with open(music, "rb") as handle:
+        resp = client.post(
+            f"/audio/{job.job_id}",
+            files={"file": ("song.mp3", handle.read(), "audio/mpeg")},
+        )
+    assert resp.status_code == 200
+    assert store.get_job(job.job_id).music_path is not None
+
+
+def test_audio_upload_rejects_non_audio(tmp_path, monkeypatch):
+    monkeypatch.setattr("backend.routes.upload.settings.upload_dir", str(tmp_path))
+    job = store.create_job(filename="v.mp4")
+    resp = client.post(
+        f"/audio/{job.job_id}",
+        files={"file": ("fake.mp3", b"not audio at all", "audio/mpeg")},
+    )
+    assert resp.status_code == 400
+
+
+def test_audio_upload_unknown_job_404():
+    resp = client.post("/audio/missing", files={"file": ("s.mp3", b"x", "audio/mpeg")})
+    assert resp.status_code == 404

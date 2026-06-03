@@ -7,7 +7,15 @@ implemented, an `fn` callable following the op contract:
 Ops are filled in across Days 6-9 via the add-ffmpeg-op skill. Entries whose
 `fn` is still None are planned but not yet executable.
 """
-from backend.processing.ops import caption, cut, extract_audio, remove_silence, speed, trim
+from backend.processing.ops import (
+    bgmusic,
+    caption,
+    cut,
+    extract_audio,
+    remove_silence,
+    speed,
+    trim,
+)
 
 OPS = [
     {
@@ -45,6 +53,12 @@ OPS = [
         "description": "Rip the audio track to a separate file.",
         "params_schema": {"format": "str=mp3"},
         "fn": extract_audio.run,
+    },
+    {
+        "op": "background_music",
+        "description": "Mix an attached music track under the video's audio.",
+        "params_schema": {"volume": "float=0.25"},
+        "fn": bgmusic.run,
     },
 ]
 

@@ -42,6 +42,8 @@ def user_message(command: str, metadata: dict | None, transcript: list[dict] | N
     if meta.get("duration_s"):
         lines.append(f"Video duration: {meta['duration_s']} seconds.")
     lines.append(f"Audio present: {bool(meta.get('has_audio'))}.")
+    if meta.get("has_music"):
+        lines.append("A background music track is attached and can be mixed in.")
     region = meta.get("region")
     if region and region.get("start") is not None and region.get("end") is not None:
         lines.append(

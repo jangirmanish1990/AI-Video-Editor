@@ -12,6 +12,7 @@ OP_HINTS = {
         "and OPENAI_API_KEY is set."
     ),
     "extract_audio": "The video may not contain an audio track.",
+    "background_music": "Attach a music track first using the + Music button.",
 }
 
 

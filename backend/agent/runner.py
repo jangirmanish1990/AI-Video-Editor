@@ -27,7 +27,8 @@ def run_agent(job, emit: Callable[[dict], None]) -> None:
         "command": job.command or "",
         "video_path": job.video_path,
         "transcript": job.transcript,
-        "metadata": job.metadata or {},
+        "music_path": getattr(job, "music_path", None),
+        "metadata": {**(job.metadata or {}), "has_music": bool(getattr(job, "music_path", None))},
     }
 
     def on_progress(op: str, index: int, total: int) -> None:

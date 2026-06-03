@@ -17,6 +17,7 @@ from backend.transcription import transcribe
 router = APIRouter()
 
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm"}
+ALLOWED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac"}
 
 
 def _transcribe_job(job_id: str) -> None:
@@ -77,3 +78,39 @@ async def upload(
     background_tasks.add_task(_transcribe_job, job.job_id)
 
     return {"job_id": job.job_id, "filename": job.filename, "metadata": job.metadata}
+
+
+@router.post("/audio/{job_id}")
+async def upload_audio(request: Request, job_id: str, file: UploadFile = File(...)):
+    """Attach a background-music track to an existing job."""
+    upload_limiter.check(client_key(request))
+
+    job = store.get_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found.")
+
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_AUDIO_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Unsupported audio type.")
+
+    upload_dir = Path(settings.upload_dir)
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    dest = upload_dir / f"{job_id}_music_{safe_filename(file.filename)}"
+
+    size = 0
+    max_bytes = settings.max_upload_mb * 1024 * 1024
+    with dest.open("wb") as out:
+        while chunk := await file.read(1024 * 1024):
+            size += len(chunk)
+            if size > max_bytes:
+                out.close()
+                dest.unlink(missing_ok=True)
+                raise HTTPException(status_code=400, detail="Audio file too large.")
+            out.write(chunk)
+
+    if not probe_metadata(str(dest)).get("has_audio", False):
+        dest.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail="That file has no audio track.")
+
+    job.music_path = str(dest)
+    return {"job_id": job_id, "music": safe_filename(file.filename)}

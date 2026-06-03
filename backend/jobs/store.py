@@ -21,13 +21,14 @@ class JobRecord:
     plan: list | None = None
     results: list = field(default_factory=list)
     transcript: list | None = None  # server-only
+    music_path: str | None = None   # server-only (background music track)
     output_path: str | None = None  # server-only
     output_url: str | None = None
     error: str | None = None
 
     def to_public(self) -> dict:
         data = asdict(self)
-        for server_only in ("video_path", "transcript", "output_path"):
+        for server_only in ("video_path", "transcript", "music_path", "output_path"):
             data.pop(server_only, None)
         return data
 

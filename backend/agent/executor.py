@@ -60,6 +60,9 @@ def execute_plan(state: AgentState, on_progress: Callable | None = None) -> dict
         # caption needs the transcript, which lives on the state, not in params.
         if op_name == "caption" and "transcript" not in params:
             params = {**params, "transcript": state.get("transcript")}
+        # background_music needs the attached music track.
+        if op_name == "background_music" and "music_path" not in params:
+            params = {**params, "music_path": state.get("music_path")}
 
         started = time.monotonic()
         try:

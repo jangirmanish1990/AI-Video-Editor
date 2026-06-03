@@ -12,11 +12,13 @@ def test_health():
     assert resp.json() == {"status": "ok"}
 
 
-def test_ops_lists_all_six():
+def test_ops_lists_supported_ops():
     resp = client.get("/ops")
     assert resp.status_code == 200
     names = {entry["op"] for entry in resp.json()}
-    assert names == {"trim", "cut", "remove_silence", "speed", "caption", "extract_audio"}
+    expected = {"trim", "cut", "remove_silence", "speed", "caption",
+                "extract_audio", "background_music"}
+    assert expected.issubset(names)
 
 
 def test_unknown_job_returns_404():

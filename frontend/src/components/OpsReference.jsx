@@ -10,6 +10,7 @@ const EXAMPLES = {
   speed: "speed up 1.5x",
   caption: "add captions",
   extract_audio: "extract the audio as mp3",
+  background_music: "add background music",
 };
 
 export default function OpsReference({ onTry, canTry }) {

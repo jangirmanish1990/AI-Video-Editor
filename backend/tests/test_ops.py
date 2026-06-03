@@ -176,3 +176,30 @@ def test_caption_burns_and_writes_srt(tmp_path):
     assert out.exists() and out.stat().st_size > 0
     assert (tmp_path / "captioned.srt").exists()
     assert probe_metadata(str(out))["duration_s"] > 2.0
+
+
+@skip_no_ffmpeg
+def test_background_music_mixes_under_audio(tmp_path):
+    from backend.processing.ops import bgmusic
+    vid = tmp_path / "v.mp4"
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=duration=3:size=160x120:rate=10",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-shortest", str(vid)],
+        check=True, capture_output=True,
+    )
+    music = tmp_path / "m.mp3"
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=220:duration=1", str(music)],
+        check=True, capture_output=True,
+    )
+    out = tmp_path / "mixed.mp4"
+    bgmusic.run(str(vid), str(out), {"music_path": str(music), "volume": 0.25})
+    meta = probe_metadata(str(out))
+    assert out.exists() and meta["has_audio"] is True
+    assert meta["duration_s"] > 2.0
+
+
+def test_background_music_without_track_raises(tmp_path):
+    from backend.processing.ops import bgmusic
+    with pytest.raises(RuntimeError):
+        bgmusic.run("x.mp4", str(tmp_path / "o.mp4"), {})

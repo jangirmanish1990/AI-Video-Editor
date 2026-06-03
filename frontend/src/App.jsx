@@ -4,6 +4,7 @@ import VideoPlayer from "./components/VideoPlayer";
 import BeforeAfter from "./components/BeforeAfter";
 import WaveformTimeline from "./components/WaveformTimeline";
 import CommandBar from "./components/CommandBar";
+import MusicUploader from "./components/MusicUploader";
 import JobStatus from "./components/JobStatus";
 import HistoryPanel from "./components/HistoryPanel";
 import OpsReference from "./components/OpsReference";
@@ -134,6 +135,7 @@ export default function App() {
               <VideoPlayer job={currentJob} />
             )}
             <WaveformTimeline job={currentJob} onSelect={setSelection} />
+            <MusicUploader jobId={currentJob.job_id} />
             <CommandBar onRun={handleRun} disabled={!currentJob} running={running} />
             {runError && <p className="text-sm text-red-400">{runError}</p>}
           </div>

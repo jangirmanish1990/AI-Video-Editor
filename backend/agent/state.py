@@ -26,6 +26,7 @@ class AgentState(TypedDict, total=False):
     command: str
     video_path: str
     transcript: list[dict] | None
+    music_path: str | None
     metadata: dict
     plan: list[EditOp] | None
     results: list[OpResult]

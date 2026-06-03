@@ -32,6 +32,13 @@ export async function startEdit(jobId, command, region = null) {
   return jsonOrThrow(resp); // { job_id, status }
 }
 
+export async function uploadAudio(jobId, file) {
+  const form = new FormData();
+  form.append("file", file);
+  const resp = await fetch(`${API_URL}/audio/${jobId}`, { method: "POST", body: form });
+  return jsonOrThrow(resp); // { job_id, music }
+}
+
 export async function getOps() {
   const resp = await fetch(`${API_URL}/ops`);
   return jsonOrThrow(resp); // [{ op, description, params_schema }]
