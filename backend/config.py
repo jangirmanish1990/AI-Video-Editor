@@ -1,5 +1,11 @@
 """Application configuration, loaded from environment / .env."""
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Populate os.environ from .env so libraries that read the environment directly
+# (notably LangChain's LangSmith tracer, which looks for LANGSMITH_*) pick it up.
+# pydantic-settings only loads .env into the Settings object, not os.environ.
+load_dotenv()
 
 
 class Settings(BaseSettings):

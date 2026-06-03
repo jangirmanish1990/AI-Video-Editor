@@ -118,3 +118,17 @@ def test_debug_log_written(tmp_path, monkeypatch):
 
     assert (tmp_path / "last_run.json").exists()
     assert (tmp_path / f"{job.job_id}.json").exists()
+
+
+def test_run_config_carries_callback_tags_and_metadata():
+    from backend.agent.observability import run_config
+
+    job = _Job(job_id="abc123", command="trim to 5 seconds")
+    cfg = run_config(job, lambda **kw: None)
+
+    assert callable(cfg["configurable"]["on_progress"])
+    assert "ai-video-editor" in cfg["tags"]
+    assert "job:abc123" in cfg["tags"]
+    assert cfg["metadata"]["job_id"] == "abc123"
+    assert cfg["metadata"]["command"] == "trim to 5 seconds"
+    assert cfg["run_name"].startswith("edit:")

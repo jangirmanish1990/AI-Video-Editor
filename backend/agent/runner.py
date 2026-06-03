@@ -12,6 +12,7 @@ from typing import Callable
 from backend.agent import debug_log
 from backend.agent.errors import friendly_error
 from backend.agent.graph import build_graph
+from backend.agent.observability import run_config
 
 
 def _failed_op(results: list[dict]) -> str | None:
@@ -32,7 +33,7 @@ def run_agent(job, emit: Callable[[dict], None]) -> None:
     def on_progress(op: str, index: int, total: int) -> None:
         emit({"type": "progress", "op": op, "index": index, "total": total})
 
-    config = {"configurable": {"on_progress": on_progress}}
+    config = run_config(job, on_progress)
     graph = build_graph()
     final = dict(state)
 

@@ -23,4 +23,4 @@ flake8>=7.0
 httpx>=0.27                  # test client for FastAPI
 
 # ── Optional observability ──
-# langsmith>=0.1
+langsmith>=0.1               # LangSmith tracing (active when LANGSMITH_TRACING=true)
