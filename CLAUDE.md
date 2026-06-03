@@ -74,13 +74,13 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 16 — waveform drag-selection → region sent with command; planner prompt uses "the selection".
 - [x] Day 17 — BeforeAfter split preview (original vs edited, synced play/pause) shown after an edit.
 - [x] Day 18 — OpsReference panel (collapsible; ops from /ops; clickable example commands).
-- [ ] Day 19 — polish pass: empty/loading/error states + "New video" control (see backlog below)
+- [x] Day 19 — polish: "New video" control (resolves the back-button UX gap), filename in header, sticky header. PHASE 3 COMPLETE.
+- [ ] Day 20 — Phase 4 begins: advanced ops / features (TBD per roadmap)
 
-## Day 19 backlog (polish pass)
-- Add a "New video / start over" control in the header — resets currentJob + run
-  state so the user can load a different clip without using browser Back (which
-  currently dumps them to the empty upload screen and loses the session).
-  Surfaced during Day 15 end-to-end testing.
+## Day 19 backlog (RESOLVED)
+- [x] "New video / start over" control added to the header — startOver() resets
+  currentJob + run + selection + lastResultUrl back to the upload screen
+  (history preserved). Clears the browser-Back UX gap found in Day 15 testing.
 
 ## Supported edit ops (target — built in Phase 2)
 trim · cut · remove_silence · speed · caption · extract_audio

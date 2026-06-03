@@ -41,6 +41,16 @@ export default function App() {
     recordedRef.current = null;
   }
 
+  // Return to the upload screen for a fresh clip (history is preserved).
+  function startOver() {
+    setCurrentJob(null);
+    setRun({ jobId: null, token: 0, command: "" });
+    setLastResultUrl(null);
+    setSelection(null);
+    setRunError(null);
+    recordedRef.current = null;
+  }
+
   // Persist history whenever it changes.
   useEffect(() => {
     try {
@@ -84,18 +94,33 @@ export default function App() {
 
   return (
     <div className="mx-auto flex min-h-full max-w-6xl flex-col px-5 py-8">
-      <header className="mb-8 flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-display text-lg font-bold text-slate-950">
-          ▶
+      <header className="sticky top-0 z-10 -mx-5 mb-8 flex items-center justify-between gap-3 border-b border-edge/60 bg-surface/85 px-5 py-4 backdrop-blur">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-display text-lg font-bold text-slate-950">
+            ▶
+          </div>
+          <div>
+            <h1 className="font-display text-xl font-bold leading-none text-slate-100">
+              AI Video Editor
+            </h1>
+            <p className="mt-1 font-mono text-[11px] text-slate-500">
+              describe an edit — the agent does the rest
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="font-display text-xl font-bold leading-none text-slate-100">
-            AI Video Editor
-          </h1>
-          <p className="mt-1 font-mono text-[11px] text-slate-500">
-            describe an edit — the agent does the rest
-          </p>
-        </div>
+        {currentJob && (
+          <div className="flex items-center gap-3">
+            <span className="hidden max-w-[180px] truncate font-mono text-[11px] text-slate-500 sm:inline">
+              {currentJob.filename}
+            </span>
+            <button
+              onClick={startOver}
+              className="rounded-lg border border-edge px-3 py-1.5 font-mono text-xs text-slate-300 transition-colors hover:border-slate-600 hover:text-slate-100"
+            >
+              + New video
+            </button>
+          </div>
+        )}
       </header>
 
       {!currentJob ? (
