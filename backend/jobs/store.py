@@ -48,3 +48,7 @@ def create_job(filename: str = "", video_path: str = "") -> JobRecord:
 
 def get_job(job_id: str) -> JobRecord | None:
     return _jobs.get(job_id)
+
+
+def delete_job(job_id: str) -> None:
+    _jobs.pop(job_id, None)

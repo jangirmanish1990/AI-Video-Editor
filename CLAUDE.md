@@ -76,7 +76,8 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 18 — OpsReference panel (collapsible; ops from /ops; clickable example commands).
 - [x] Day 19 — polish: "New video" control (resolves the back-button UX gap), filename in header, sticky header. PHASE 3 COMPLETE.
 - [x] Day 20 — LangSmith observability: .env loaded into os.environ (tracing activates) + enriched run name/tags/metadata per edit. Phase 4 begins.
-- [ ] Day 21 — (Phase 4) next advanced feature per roadmap
+- [x] Day 21 — security hardening: filename sanitization (no traversal), ffprobe content validation, command-length cap, per-IP rate limiting on /upload + /edit. 56 tests.
+- [ ] Day 22 — (Phase 4) next advanced feature per roadmap
 
 ## Day 19 backlog (RESOLVED)
 - [x] "New video / start over" control added to the header — startOver() resets

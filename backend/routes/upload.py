@@ -1,17 +1,17 @@
-"""POST /upload — accept a video, persist it, probe metadata, start transcription.
+"""POST /upload — accept a video, validate it, persist it, probe, transcribe.
 
-Saves the file, reads real metadata with ffprobe, and kicks off Whisper
-transcription as a background task (fire-and-forget; the result is cached on
-the job and surfaced via GET /jobs/{job_id}). The caption op (Day 9) consumes
-the transcript.
+Hardened: rate-limited per IP, filename sanitized (no path traversal), and the
+saved file is validated as a real video via ffprobe (extension alone isn't
+trusted). Whisper transcription runs as a fire-and-forget background task.
 """
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, UploadFile
 
 from backend.config import settings
 from backend.jobs import store
 from backend.processing.probe import probe_metadata
+from backend.security import client_key, safe_filename, upload_limiter
 from backend.transcription import transcribe
 
 router = APIRouter()
@@ -27,7 +27,13 @@ def _transcribe_job(job_id: str) -> None:
 
 
 @router.post("/upload")
-async def upload(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+async def upload(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+):
+    upload_limiter.check(client_key(request))
+
     ext = Path(file.filename or "").suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -38,8 +44,8 @@ async def upload(background_tasks: BackgroundTasks, file: UploadFile = File(...)
     upload_dir = Path(settings.upload_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
 
-    job = store.create_job(filename=file.filename or "video")
-    dest = upload_dir / f"{job.job_id}_{file.filename}"
+    job = store.create_job(filename=safe_filename(file.filename))
+    dest = upload_dir / f"{job.job_id}_{job.filename}"
 
     size = 0
     max_bytes = settings.max_upload_mb * 1024 * 1024
@@ -55,10 +61,19 @@ async def upload(background_tasks: BackgroundTasks, file: UploadFile = File(...)
                 )
             out.write(chunk)
 
-    job.video_path = str(dest)
-    job.metadata = probe_metadata(str(dest))
+    metadata = probe_metadata(str(dest))
+    # Trust ffprobe, not the extension: a real video has video-stream dimensions.
+    if metadata["width"] == 0 and metadata["height"] == 0:
+        dest.unlink(missing_ok=True)
+        store.delete_job(job.job_id)
+        raise HTTPException(
+            status_code=400,
+            detail="That file doesn't look like a valid video.",
+        )
 
-    # Fire-and-forget transcription (runs in a threadpool after the response).
+    job.video_path = str(dest)
+    job.metadata = metadata
+
     background_tasks.add_task(_transcribe_job, job.job_id)
 
     return {"job_id": job.job_id, "filename": job.filename, "metadata": job.metadata}

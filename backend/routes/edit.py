@@ -9,11 +9,12 @@ events cross back to the event loop via a thread-safe queue.
 """
 import asyncio
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Request, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel, Field
 
 from backend.agent.runner import run_agent
 from backend.jobs import store
+from backend.security import MAX_COMMAND_CHARS, client_key, edit_limiter
 
 router = APIRouter()
 
@@ -25,12 +26,13 @@ class Region(BaseModel):
 
 class EditRequest(BaseModel):
     job_id: str
-    command: str
+    command: str = Field(..., min_length=1, max_length=MAX_COMMAND_CHARS)
     region: Region | None = None
 
 
 @router.post("/edit", status_code=202)
-async def edit(req: EditRequest):
+async def edit(request: Request, req: EditRequest):
+    edit_limiter.check(client_key(request))
     job = store.get_job(req.job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found.")
