@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import Uploader from "./components/Uploader";
 import VideoPlayer from "./components/VideoPlayer";
+import BeforeAfter from "./components/BeforeAfter";
 import WaveformTimeline from "./components/WaveformTimeline";
 import CommandBar from "./components/CommandBar";
 import JobStatus from "./components/JobStatus";
 import HistoryPanel from "./components/HistoryPanel";
 import { useJobSocket } from "./hooks/useJobSocket";
-import { startEdit } from "./api";
+import { startEdit, downloadUrl } from "./api";
 
 const HISTORY_KEY = "ave_history";
 
@@ -24,10 +25,20 @@ export default function App() {
   const [runError, setRunError] = useState(null);
   const [history, setHistory] = useState(loadHistory);
   const [selection, setSelection] = useState(null);
+  const [lastResultUrl, setLastResultUrl] = useState(null);
   const recordedRef = useRef(null);
 
   const socket = useJobSocket(run.jobId, run.token);
   const running = socket.status && socket.status !== "done" && !socket.error;
+
+  // Loading a different clip clears everything tied to the previous one.
+  function loadJob(job) {
+    setCurrentJob(job);
+    setLastResultUrl(null);
+    setSelection(null);
+    setRunError(null);
+    recordedRef.current = null;
+  }
 
   // Persist history whenever it changes.
   useEffect(() => {
@@ -51,6 +62,13 @@ export default function App() {
     };
     setHistory((prev) => [entry, ...prev].slice(0, 20));
   }, [socket.result, currentJob, run.token, run.command, socket.plan]);
+
+  // Keep the edited preview URL fresh (cache-busted per run).
+  useEffect(() => {
+    if (socket.result && currentJob) {
+      setLastResultUrl(`${downloadUrl(currentJob.job_id)}?v=${run.token}`);
+    }
+  }, [socket.result, currentJob, run.token]);
 
   async function handleRun(command) {
     if (!currentJob) return;
@@ -80,11 +98,15 @@ export default function App() {
       </header>
 
       {!currentJob ? (
-        <Uploader onUploaded={setCurrentJob} />
+        <Uploader onUploaded={loadJob} />
       ) : (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_340px]">
           <div className="flex flex-col gap-4">
-            <VideoPlayer job={currentJob} />
+            {lastResultUrl ? (
+              <BeforeAfter job={currentJob} resultUrl={lastResultUrl} />
+            ) : (
+              <VideoPlayer job={currentJob} />
+            )}
             <WaveformTimeline job={currentJob} onSelect={setSelection} />
             <CommandBar onRun={handleRun} disabled={!currentJob} running={running} />
             {runError && <p className="text-sm text-red-400">{runError}</p>}
