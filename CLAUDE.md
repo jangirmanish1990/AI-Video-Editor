@@ -82,7 +82,17 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 24 — batch processing: POST /batch + GET /batch/{id} (backend, 70 tests) + BatchPanel frontend (multi-file upload → single command → per-job results); dev.ps1 fixed to use explicit venv Python. PHASE 4 COMPLETE.
 - [x] Day 25 — Cloudinary storage: upload_output after each edit, redirect on download, fails soft when not configured. 72 tests.
 - [x] Day 26 — Railway deployment files: Procfile, nixpacks.toml (FFmpeg), .python-version; CORS wildcard support; Cloudinary folder fix.
-- [ ] Day 27 — Vercel frontend deployment
+- [x] Day 27 — Vercel frontend deployment (api.js already uses VITE_API_URL; vercel.json SPA rewrite already in place).
+- [ ] Day 28 — /deploy command + README polish
+
+## Vercel deployment (Phase 5)
+1. Go to https://vercel.com → Sign in with GitHub → New Project
+2. Import AI-Video-Editor repo → **Root Directory: frontend**
+3. Framework: Vite (auto-detected)
+4. Environment variable: VITE_API_URL=https://your-railway-url (no trailing slash)
+5. Deploy → Vercel gives URL like https://ai-video-editor-xxx.vercel.app
+6. Back in Railway Variables tab: update FRONTEND_ORIGIN to the Vercel URL
+7. Railway redeploys with correct CORS → both services connected
 
 ## Railway deployment (Phase 5)
 1. Push latest code to GitHub.
@@ -105,3 +115,17 @@ LANGSMITH_TRACING     # optional — "true" to enable
 
 ## Supported edit ops (target — built in Phase 2)
 trim · cut · remove_silence · speed · caption · extract_audio
+
+## Render deployment (switching from Railway — trial maxed out)
+1. Push Dockerfile + .dockerignore + render.yaml to GitHub
+2. Go to https://render.com → Sign in with GitHub → New → Web Service
+3. Connect AI-Video-Editor repo → Runtime: Docker (auto-detected)
+4. Plan: Free | Name: ai-video-editor
+5. Add env vars in Render dashboard:
+   - OPENAI_API_KEY=sk-proj-...
+   - CLOUDINARY_URL=cloudinary://...@dtkc9roxy
+   - (FRONTEND_ORIGIN and others come from render.yaml)
+6. Deploy → ~5 min first build
+7. Render URL: https://ai-video-editor-xxx.onrender.com
+8. Update Vercel VITE_API_URL → redeploy Vercel
+Note: Free tier cold starts ~30s after 15min inactivity.

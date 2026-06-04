@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: ai-video-editor
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false          # set in Render dashboard, never in code
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: FRONTEND_ORIGIN
+        value: https://ai-video-editor-rosy.vercel.app
+      - key: LANGSMITH_TRACING
+        value: "false"
+      - key: LANGSMITH_PROJECT
+        value: ai-video-editor
+      - key: MAX_UPLOAD_MB
+        value: "500"

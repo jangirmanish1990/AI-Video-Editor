@@ -1,0 +1,10 @@
+venv/
+frontend/node_modules/
+frontend/dist/
+uploads/
+logs/
+.env
+**/__pycache__/
+**/*.pyc
+.git/
+*.zip
