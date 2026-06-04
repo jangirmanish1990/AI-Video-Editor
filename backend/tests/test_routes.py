@@ -138,3 +138,26 @@ def test_audio_upload_rejects_non_audio(tmp_path, monkeypatch):
 def test_audio_upload_unknown_job_404():
     resp = client.post("/audio/missing", files={"file": ("s.mp3", b"x", "audio/mpeg")})
     assert resp.status_code == 404
+
+
+@skip_no_ffmpeg
+def test_broll_upload_attaches_clip(tmp_path, monkeypatch):
+    monkeypatch.setattr("backend.routes.upload.settings.upload_dir", str(tmp_path))
+    clip = tmp_path / "b.mp4"
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=10", str(clip)],
+        check=True, capture_output=True,
+    )
+    job = store.create_job(filename="v.mp4")
+    with open(clip, "rb") as handle:
+        resp = client.post(
+            f"/broll/{job.job_id}",
+            files={"file": ("b.mp4", handle.read(), "video/mp4")},
+        )
+    assert resp.status_code == 200
+    assert store.get_job(job.job_id).broll_path is not None
+
+
+def test_broll_upload_unknown_job_404():
+    resp = client.post("/broll/missing", files={"file": ("b.mp4", b"x", "video/mp4")})
+    assert resp.status_code == 404

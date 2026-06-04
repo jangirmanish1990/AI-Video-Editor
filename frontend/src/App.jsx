@@ -5,9 +5,11 @@ import BeforeAfter from "./components/BeforeAfter";
 import WaveformTimeline from "./components/WaveformTimeline";
 import CommandBar from "./components/CommandBar";
 import MusicUploader from "./components/MusicUploader";
+import BrollUploader from "./components/BrollUploader";
 import JobStatus from "./components/JobStatus";
 import HistoryPanel from "./components/HistoryPanel";
 import OpsReference from "./components/OpsReference";
+import BatchPanel from "./components/BatchPanel";
 import { useJobSocket } from "./hooks/useJobSocket";
 import { startEdit, downloadUrl } from "./api";
 
@@ -135,7 +137,10 @@ export default function App() {
               <VideoPlayer job={currentJob} />
             )}
             <WaveformTimeline job={currentJob} onSelect={setSelection} />
-            <MusicUploader jobId={currentJob.job_id} />
+            <div className="flex flex-wrap items-center gap-3">
+              <MusicUploader jobId={currentJob.job_id} />
+              <BrollUploader jobId={currentJob.job_id} />
+            </div>
             <CommandBar onRun={handleRun} disabled={!currentJob} running={running} />
             {runError && <p className="text-sm text-red-400">{runError}</p>}
           </div>
@@ -143,6 +148,7 @@ export default function App() {
             <JobStatus jobId={run.jobId} socket={socket} />
             <HistoryPanel history={history} onClear={() => setHistory([])} />
             <OpsReference onTry={handleRun} canTry={Boolean(currentJob) && !running} />
+            <BatchPanel />
           </aside>
         </div>
       )}

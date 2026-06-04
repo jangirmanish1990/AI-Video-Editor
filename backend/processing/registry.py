@@ -9,6 +9,7 @@ Ops are filled in across Days 6-9 via the add-ffmpeg-op skill. Entries whose
 """
 from backend.processing.ops import (
     bgmusic,
+    broll,
     caption,
     cut,
     extract_audio,
@@ -59,6 +60,12 @@ OPS = [
         "description": "Mix an attached music track under the video's audio.",
         "params_schema": {"volume": "float=0.25"},
         "fn": bgmusic.run,
+    },
+    {
+        "op": "insert_clip",
+        "description": "Prepend or append an attached B-roll clip (intro/outro).",
+        "params_schema": {"position": "str=start (start|end)"},
+        "fn": broll.run,
     },
 ]
 

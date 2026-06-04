@@ -39,6 +39,27 @@ export async function uploadAudio(jobId, file) {
   return jsonOrThrow(resp); // { job_id, music }
 }
 
+export async function submitBatch(jobIds, command) {
+  const resp = await fetch(`${API_URL}/batch`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ job_ids: jobIds, command }),
+  });
+  return jsonOrThrow(resp); // { batch_id, total, status }
+}
+
+export async function getBatch(batchId) {
+  const resp = await fetch(`${API_URL}/batch/${batchId}`);
+  return jsonOrThrow(resp); // { batch_id, command, status, total, completed, results }
+}
+
+export async function uploadBroll(jobId, file) {
+  const form = new FormData();
+  form.append("file", file);
+  const resp = await fetch(`${API_URL}/broll/${jobId}`, { method: "POST", body: form });
+  return jsonOrThrow(resp); // { job_id, broll }
+}
+
 export async function getOps() {
   const resp = await fetch(`${API_URL}/ops`);
   return jsonOrThrow(resp); // [{ op, description, params_schema }]

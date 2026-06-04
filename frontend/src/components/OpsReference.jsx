@@ -11,6 +11,7 @@ const EXAMPLES = {
   caption: "add captions",
   extract_audio: "extract the audio as mp3",
   background_music: "add background music",
+  insert_clip: "add the b-roll as an intro",
 };
 
 export default function OpsReference({ onTry, canTry }) {

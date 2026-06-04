@@ -78,7 +78,10 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 20 — LangSmith observability: .env loaded into os.environ (tracing activates) + enriched run name/tags/metadata per edit. Phase 4 begins.
 - [x] Day 21 — security hardening: filename sanitization (no traversal), ffprobe content validation, command-length cap, per-IP rate limiting on /upload + /edit. 56 tests.
 - [x] Day 22 — background_music op + /audio upload endpoint + MusicUploader; executor injects music_path, planner knows when music is attached. 7 ops now. 61 tests.
-- [ ] Day 23 — (Phase 4) next advanced feature per roadmap (b-roll or batch)
+- [x] Day 23 — insert_clip (B-roll) op + /broll endpoint + BrollUploader; normalizes mismatched res/fps/audio then concat-demuxer joins. 8 ops. 65 tests.
+- [x] Day 24 — batch processing: POST /batch + GET /batch/{id} (backend, 70 tests) + BatchPanel frontend (multi-file upload → single command → per-job results); dev.ps1 fixed to use explicit venv Python. PHASE 4 COMPLETE.
+- [ ] Day 25 — Phase 5 begins: deployment (Cloudinary storage, Railway backend, Vercel frontend)
+- [ ] Day 25 — Phase 5 begins: Cloudinary + Railway/Vercel deployment
 
 ## Day 19 backlog (RESOLVED)
 - [x] "New video / start over" control added to the header — startOver() resets

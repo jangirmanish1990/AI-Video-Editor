@@ -114,3 +114,40 @@ async def upload_audio(request: Request, job_id: str, file: UploadFile = File(..
 
     job.music_path = str(dest)
     return {"job_id": job_id, "music": safe_filename(file.filename)}
+
+
+@router.post("/broll/{job_id}")
+async def upload_broll(request: Request, job_id: str, file: UploadFile = File(...)):
+    """Attach a B-roll video clip to an existing job."""
+    upload_limiter.check(client_key(request))
+
+    job = store.get_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found.")
+
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Unsupported video type for B-roll.")
+
+    upload_dir = Path(settings.upload_dir)
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    dest = upload_dir / f"{job_id}_broll_{safe_filename(file.filename)}"
+
+    size = 0
+    max_bytes = settings.max_upload_mb * 1024 * 1024
+    with dest.open("wb") as out:
+        while chunk := await file.read(1024 * 1024):
+            size += len(chunk)
+            if size > max_bytes:
+                out.close()
+                dest.unlink(missing_ok=True)
+                raise HTTPException(status_code=400, detail="B-roll file too large.")
+            out.write(chunk)
+
+    meta = probe_metadata(str(dest))
+    if meta["width"] == 0 and meta["height"] == 0:
+        dest.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail="That file doesn't look like a valid video.")
+
+    job.broll_path = str(dest)
+    return {"job_id": job_id, "broll": safe_filename(file.filename)}

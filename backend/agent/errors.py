@@ -13,6 +13,7 @@ OP_HINTS = {
     ),
     "extract_audio": "The video may not contain an audio track.",
     "background_music": "Attach a music track first using the + Music button.",
+    "insert_clip": "Attach a B-roll clip first using the + B-roll button.",
 }
 
 

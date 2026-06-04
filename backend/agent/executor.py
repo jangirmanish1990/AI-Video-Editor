@@ -63,6 +63,9 @@ def execute_plan(state: AgentState, on_progress: Callable | None = None) -> dict
         # background_music needs the attached music track.
         if op_name == "background_music" and "music_path" not in params:
             params = {**params, "music_path": state.get("music_path")}
+        # insert_clip needs the attached b-roll clip.
+        if op_name == "insert_clip" and "clip_path" not in params:
+            params = {**params, "clip_path": state.get("broll_path")}
 
         started = time.monotonic()
         try:

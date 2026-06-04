@@ -203,3 +203,32 @@ def test_background_music_without_track_raises(tmp_path):
     from backend.processing.ops import bgmusic
     with pytest.raises(RuntimeError):
         bgmusic.run("x.mp4", str(tmp_path / "o.mp4"), {})
+
+
+@skip_no_ffmpeg
+def test_insert_clip_prepends_broll(tmp_path):
+    from backend.processing.ops import broll
+    main = tmp_path / "main.mp4"
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=duration=3:size=320x240:rate=15",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-shortest", str(main)],
+        check=True, capture_output=True,
+    )
+    clip = tmp_path / "broll.mp4"  # different res/fps, no audio
+    subprocess.run(
+        ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc2=duration=2:size=640x360:rate=30",
+         "-an", str(clip)],
+        check=True, capture_output=True,
+    )
+    out = tmp_path / "joined.mp4"
+    broll.run(str(main), str(out), {"clip_path": str(clip), "position": "start"})
+    meta = probe_metadata(str(out))
+    # ~3s main + ~2s broll, normalized to main's 320x240
+    assert meta["width"] == 320 and meta["height"] == 240
+    assert meta["duration_s"] > 4.0
+
+
+def test_insert_clip_without_clip_raises(tmp_path):
+    from backend.processing.ops import broll
+    with pytest.raises(RuntimeError):
+        broll.run("x.mp4", str(tmp_path / "o.mp4"), {})

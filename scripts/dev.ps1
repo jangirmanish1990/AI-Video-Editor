@@ -1,10 +1,12 @@
-# Launches the backend (uvicorn) and frontend (vite) dev servers, each in its
-# own PowerShell window. Run from anywhere:  .\scripts\dev.ps1
+# Launches the backend (uvicorn) and frontend (vite) dev servers.
+# Uses the venv Python explicitly so Windows Store Python can never
+# shadow it and cause stale-server issues.
 $root = Split-Path $PSScriptRoot -Parent
+$python = "$root\venv\Scripts\python.exe"
 
 Start-Process powershell -ArgumentList @(
     "-NoExit", "-Command",
-    "cd '$root'; .\venv\Scripts\Activate.ps1; python -m uvicorn backend.main:app --reload"
+    "cd '$root'; '$python' -m uvicorn backend.main:app --reload"
 )
 
 Start-Process powershell -ArgumentList @(
@@ -14,3 +16,4 @@ Start-Process powershell -ArgumentList @(
 
 Write-Host "Backend  -> http://localhost:8000  (docs at /docs)"
 Write-Host "Frontend -> http://localhost:5173"
+Write-Host "Python   -> $python"
