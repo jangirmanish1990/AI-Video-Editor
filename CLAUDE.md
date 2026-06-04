@@ -80,7 +80,22 @@ LANGSMITH_TRACING     # optional — "true" to enable
 - [x] Day 22 — background_music op + /audio upload endpoint + MusicUploader; executor injects music_path, planner knows when music is attached. 7 ops now. 61 tests.
 - [x] Day 23 — insert_clip (B-roll) op + /broll endpoint + BrollUploader; normalizes mismatched res/fps/audio then concat-demuxer joins. 8 ops. 65 tests.
 - [x] Day 24 — batch processing: POST /batch + GET /batch/{id} (backend, 70 tests) + BatchPanel frontend (multi-file upload → single command → per-job results); dev.ps1 fixed to use explicit venv Python. PHASE 4 COMPLETE.
-- [ ] Day 25 — Phase 5 begins: deployment (Cloudinary storage, Railway backend, Vercel frontend)
+- [x] Day 25 — Cloudinary storage: upload_output after each edit, redirect on download, fails soft when not configured. 72 tests.
+- [x] Day 26 — Railway deployment files: Procfile, nixpacks.toml (FFmpeg), .python-version; CORS wildcard support; Cloudinary folder fix.
+- [ ] Day 27 — Vercel frontend deployment
+
+## Railway deployment (Phase 5)
+1. Push latest code to GitHub.
+2. Go to https://railway.app → New Project → Deploy from GitHub → select AI-Video-Editor repo.
+3. Railway auto-detects Python + installs FFmpeg via nixpacks.toml.
+4. Set these env vars in Railway dashboard (Settings → Variables):
+   - OPENAI_API_KEY=sk-proj-...
+   - CLOUDINARY_URL=cloudinary://...@dtkc9roxy
+   - FRONTEND_ORIGIN=* (update to Vercel URL after Day 27)
+   - LANGSMITH_TRACING=false (or true with key)
+   - MAX_UPLOAD_MB=500
+5. Railway generates URL: https://ai-video-editor-production.up.railway.app
+6. Test: open /health and /docs on that URL.
 - [ ] Day 25 — Phase 5 begins: Cloudinary + Railway/Vercel deployment
 
 ## Day 19 backlog (RESOLVED)

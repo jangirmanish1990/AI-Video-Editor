@@ -11,9 +11,13 @@ from backend.routes import batch, edit, info, jobs, upload
 
 app = FastAPI(title="AI Video Editor", version="0.1.0")
 
+origins = (
+    ["*"] if settings.frontend_origin == "*"
+    else [o.strip() for o in settings.frontend_origin.split(",")]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_origin],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

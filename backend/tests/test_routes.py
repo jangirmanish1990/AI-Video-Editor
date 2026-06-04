@@ -161,3 +161,22 @@ def test_broll_upload_attaches_clip(tmp_path, monkeypatch):
 def test_broll_upload_unknown_job_404():
     resp = client.post("/broll/missing", files={"file": ("b.mp4", b"x", "video/mp4")})
     assert resp.status_code == 404
+
+
+def test_download_redirects_to_cloudinary_url():
+    job = store.create_job(filename="x.mp4")
+    job.output_url = "https://res.cloudinary.com/demo/video/upload/sample.mp4"
+    resp = client.get(f"/download/{job.job_id}", follow_redirects=False)
+    assert resp.status_code in (301, 302, 307, 308)
+    assert "cloudinary.com" in resp.headers["location"]
+
+
+def test_storage_upload_skipped_without_cloudinary(monkeypatch):
+    monkeypatch.delenv("CLOUDINARY_URL", raising=False)
+    from backend import storage
+
+    class FakeJob:
+        job_id = "abc"
+        output_path = "/tmp/nonexistent.mp4"
+
+    assert storage.upload_output(FakeJob()) is None

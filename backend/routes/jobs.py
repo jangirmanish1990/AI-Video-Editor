@@ -4,7 +4,6 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 
-from backend.config import settings
 from backend.jobs import store
 
 router = APIRouter()
@@ -24,11 +23,11 @@ async def download(job_id: str):
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found.")
 
-    # Prod: redirect to the Cloudinary URL.
-    if settings.use_cloudinary and job.output_url:
+    # Cloud storage (Cloudinary): redirect directly — no server bandwidth needed.
+    if job.output_url:
         return RedirectResponse(job.output_url)
 
-    # Dev: stream the processed file from disk.
+    # Dev / local fallback: stream the file from disk.
     if not job.output_path or not Path(job.output_path).exists():
         raise HTTPException(status_code=404, detail="No processed output yet for this job.")
     return FileResponse(job.output_path, media_type="video/mp4")

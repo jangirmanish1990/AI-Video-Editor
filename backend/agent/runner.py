@@ -13,6 +13,7 @@ from backend.agent import debug_log
 from backend.agent.errors import friendly_error
 from backend.agent.graph import build_graph
 from backend.agent.observability import run_config
+from backend import storage
 
 
 def _failed_op(results: list[dict]) -> str | None:
@@ -71,6 +72,9 @@ def run_agent(job, emit: Callable[[dict], None]) -> None:
 
     job.status = "done"
     job.output_path = final.get("output_path")
+    cloud_url = storage.upload_output(job)
+    if cloud_url:
+        job.output_url = cloud_url
     emit({
         "type": "result",
         "output_url": f"/download/{job.job_id}",
